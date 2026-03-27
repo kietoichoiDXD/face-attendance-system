@@ -1,0 +1,135 @@
+service: face-attendance-system
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: python3.9
+  region: us-east-1
+  environment:
+    STUDENTS_TABLE: ${self:custom.studentsTable}
+    ATTENDANCE_TABLE: ${self:custom.attendanceTable}
+    CLASSES_TABLE: ${self:custom.classesTable}
+    STUDENT_FACES_BUCKET: ${self:custom.studentFacesBucket}
+    CLASS_UPLOADS_BUCKET: ${self:custom.classUploadsBucket}
+    REKOGNITION_COLLECTION_ID: face-attendance-collection
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:PutItem
+            - dynamodb:GetItem
+            - dynamodb:Scan
+            - dynamodb:Query
+            - dynamodb:UpdateItem
+          Resource:
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.studentsTable}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.attendanceTable}"
+            - "arn:aws:dynamodb:${self:provider.region}:*:table/${self:custom.classesTable}"
+        - Effect: Allow
+          Action:
+            - s3:PutObject
+            - s3:GetObject
+          Resource:
+            - "arn:aws:s3:::${self:custom.studentFacesBucket}/*"
+            - "arn:aws:s3:::${self:custom.classUploadsBucket}/*"
+        - Effect: Allow
+          Action:
+            - rekognition:IndexFaces
+            - rekognition:SearchFacesByImage
+            - rekognition:CreateCollection
+          Resource: "*"
+
+custom:
+  studentsTable: students-${sls:stage}
+  attendanceTable: attendance-${sls:stage}
+  classesTable: classes-${sls:stage}
+  studentFacesBucket: face-attendance-students-${sls:stage}
+  classUploadsBucket: face-attendance-classes-${sls:stage}
+
+functions:
+  registerStudent:
+    handler: src/register_student.handler
+    events:
+      - httpApi:
+          path: /students/{student_id}/face
+          method: post
+
+  processAttendance:
+    handler: src/process_attendance.handler
+    events:
+      - httpApi:
+          path: /classes/{class_id}/attendance
+          method: post
+
+  getAnalytics:
+    handler: src/analytics.handler
+    events:
+      - httpApi:
+          path: /analytics
+          method: get
+
+  exportCsv:
+    handler: src/export_csv.handler
+    events:
+      - httpApi:
+          path: /attendance/export
+          method: get
+
+resources:
+  Resources:
+    StudentsTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.studentsTable}
+        AttributeDefinitions:
+          - AttributeName: student_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: student_id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    AttendanceTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.attendanceTable}
+        AttributeDefinitions:
+          - AttributeName: attendance_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: attendance_id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    ClassesTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.classesTable}
+        AttributeDefinitions:
+          - AttributeName: class_id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: class_id
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+    StudentFacesBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.studentFacesBucket}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ["*"]
+              AllowedMethods: ["PUT", "POST"]
+              AllowedOrigins: ["*"]
+
+    ClassUploadsBucket:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.classUploadsBucket}
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders: ["*"]
+              AllowedMethods: ["PUT", "POST"]
+              AllowedOrigins: ["*"]
