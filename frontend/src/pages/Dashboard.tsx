@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { getAnalytics, exportCsvUrl } from '../api/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
@@ -38,23 +38,34 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Sessions</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Students</CardTitle>
             <CalendarCheck className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{data?.total_sessions || 0}</div>
-            <p className="text-xs text-slate-500 mt-1">Processed classes</p>
+            <div className="text-3xl font-bold">{data?.total_students || 0}</div>
+            <p className="text-xs text-slate-500 mt-1">Registered in system</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Present</CardTitle>
+            <CardTitle className="text-sm font-medium">Attendance Rate</CardTitle>
             <Users className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{data?.total_present_all_time || 0}</div>
-            <p className="text-xs text-slate-500 mt-1">Students marked present</p>
+            <div className="text-3xl font-bold">{data?.attendance_rate || 0}%</div>
+            <p className="text-xs text-slate-500 mt-1">Across processed sessions</p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Classes</CardTitle>
+            <Users className="h-4 w-4 text-slate-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">{data?.total_classes || 0}</div>
+            <p className="text-xs text-slate-500 mt-1">Distinct class groups</p>
           </CardContent>
         </Card>
       </div>
@@ -65,9 +76,9 @@ export default function Dashboard() {
           <CardDescription>Number of present students per session date</CardDescription>
         </CardHeader>
         <CardContent className="h-[350px]">
-          {data?.chart_data?.length ? (
+          {data?.recent_attendance?.length ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data.chart_data}>
+              <BarChart data={data.recent_attendance}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dy={10} />
                 <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} dx={-10} />

@@ -1,10 +1,14 @@
 service: face-attendance-system
 frameworkVersion: '3'
 
+plugins:
+  - serverless-python-requirements
+
 provider:
   name: aws
-  runtime: python3.9
+  runtime: python3.12
   region: us-east-1
+  logRetentionInDays: 14
   environment:
     STUDENTS_TABLE: ${self:custom.studentsTable}
     ATTENDANCE_TABLE: ${self:custom.attendanceTable}
@@ -12,6 +16,10 @@ provider:
     STUDENT_FACES_BUCKET: ${self:custom.studentFacesBucket}
     CLASS_UPLOADS_BUCKET: ${self:custom.classUploadsBucket}
     REKOGNITION_COLLECTION_ID: face-attendance-collection
+    VISION_PROVIDER: google
+    GCP_PROJECT_ID: ${env:GCP_PROJECT_ID, 'bdien-muonmay'}
+    GCP_SERVICE_ACCOUNT_JSON: ${env:GCP_SERVICE_ACCOUNT_JSON, ''}
+    GCP_SERVICE_ACCOUNT_JSON_B64: ${env:GCP_SERVICE_ACCOUNT_JSON_B64, ''}
   iam:
     role:
       statements:
@@ -30,7 +38,10 @@ provider:
           Action:
             - s3:PutObject
             - s3:GetObject
+            - s3:ListBucket
           Resource:
+            - "arn:aws:s3:::${self:custom.studentFacesBucket}"
+            - "arn:aws:s3:::${self:custom.classUploadsBucket}"
             - "arn:aws:s3:::${self:custom.studentFacesBucket}/*"
             - "arn:aws:s3:::${self:custom.classUploadsBucket}/*"
         - Effect: Allow
@@ -38,9 +49,13 @@ provider:
             - rekognition:IndexFaces
             - rekognition:SearchFacesByImage
             - rekognition:CreateCollection
+            - rekognition:CompareFaces
           Resource: "*"
 
 custom:
+  pythonRequirements:
+    dockerizePip: non-linux
+    slim: true
   studentsTable: students-${sls:stage}
   attendanceTable: attendance-${sls:stage}
   classesTable: classes-${sls:stage}
@@ -55,12 +70,33 @@ functions:
           path: /students/{student_id}/face
           method: post
 
+  requestAttendanceUploadUrl:
+    handler: src/request_upload_url.handler
+    events:
+      - httpApi:
+          path: /classes/{class_id}/attendance/upload-url
+          method: post
+
   processAttendance:
     handler: src/process_attendance.handler
     events:
       - httpApi:
           path: /classes/{class_id}/attendance
           method: post
+
+  processUploadedAttendance:
+    handler: src/process_uploaded_attendance.handler
+    events:
+      - s3:
+          bucket: ${self:custom.classUploadsBucket}
+          event: s3:ObjectCreated:Put
+
+  getAttendance:
+    handler: src/get_attendance.handler
+    events:
+      - httpApi:
+          path: /attendance/{attendance_id}
+          method: get
 
   getAnalytics:
     handler: src/analytics.handler
@@ -131,5 +167,5 @@ resources:
         CorsConfiguration:
           CorsRules:
             - AllowedHeaders: ["*"]
-              AllowedMethods: ["PUT", "POST"]
+              AllowedMethods: ["PUT", "POST", "GET"]
               AllowedOrigins: ["*"]
