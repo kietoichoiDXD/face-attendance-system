@@ -1,31 +1,21 @@
-import os
 import csv
 import io
-import boto3
+from services.attendance_service import AttendanceService
 
-dynamodb = boto3.resource('dynamodb')
-ATTENDANCE_TABLE = os.environ.get('ATTENDANCE_TABLE')
+
+service = AttendanceService()
 
 def handler(event, context):
     try:
-        table = dynamodb.Table(ATTENDANCE_TABLE)
-        response = table.scan()
-        attendance_logs = response.get('Items', [])
-        
         output = io.StringIO()
         writer = csv.writer(output)
-        writer.writerow(['Attendance ID', 'Class ID', 'Date', 'Present count'])
-        
-        for log in attendance_logs:
-            writer.writerow([
-                log.get('attendance_id'),
-                log.get('class_id'),
-                log.get('date'),
-                len(log.get('present_students', []))
-            ])
-            
+        writer.writerow(['Attendance ID', 'Class ID', 'Status', 'Created At', 'Processed At', 'Present count'])
+
+        for row in service.export_rows():
+            writer.writerow(row)
+
         csv_content = output.getvalue()
-        
+
         return {
             'statusCode': 200,
             'headers': {
@@ -35,9 +25,9 @@ def handler(event, context):
             },
             'body': csv_content
         }
-    except Exception as e:
+    except Exception as exc:
         return {
             'statusCode': 500,
             'headers': {'Access-Control-Allow-Origin': '*'},
-            'body': str(e)
+            'body': str(exc)
         }

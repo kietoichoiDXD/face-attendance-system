@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter }
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Button } from '../components/ui/button';
-import { processAttendance } from '../api/client';
+import { getAttendanceById, processAttendance, requestAttendanceUploadUrl, uploadAttendanceImage, waitForAttendanceResult } from '../api/client';
 import { FileImage, Loader2, CheckCircle2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -15,6 +15,8 @@ export default function UploadAttendance() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [attendanceId, setAttendanceId] = useState<string | null>(null);
+  const [processingStage, setProcessingStage] = useState<string | null>(null);
   
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -34,7 +36,7 @@ export default function UploadAttendance() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!classId || !imagePreviewUrl) {
+    if (!classId || !imageFile) {
       setError('Please provide Class ID and select an image.');
       return;
     }
@@ -42,17 +44,42 @@ export default function UploadAttendance() {
     setLoading(true);
     setError(null);
     setResult(null);
+    setAttendanceId(null);
+    setProcessingStage('Creating upload session...');
 
     try {
-      // Extract base64
-      const base64 = imagePreviewUrl.replace(/^data:image\/[a-z]+;base64,/, "");
-      
-      const response = await processAttendance(classId, { image: base64 });
+      const uploadSession = await requestAttendanceUploadUrl(classId);
+      setAttendanceId(uploadSession.attendance_id);
+
+      setProcessingStage('Uploading image to cloud storage...');
+      await uploadAttendanceImage(uploadSession.upload_url, imageFile);
+
+      setProcessingStage('Cloud AI is detecting and matching faces...');
+      const response = await waitForAttendanceResult(uploadSession.attendance_id);
       setResult(response);
     } catch (err: any) {
-      setError(err.response?.data?.error || err.message);
+      // Fallback for environments where upload-url endpoint is not deployed yet.
+      if (imagePreviewUrl) {
+        try {
+          setProcessingStage('Fallback mode: processing directly via API...');
+          const base64 = imagePreviewUrl.replace(/^data:image\/[a-z]+;base64,/, '');
+          const fallbackResponse = await processAttendance(classId, { image: base64 });
+          if (fallbackResponse?.attendance_id) {
+            setAttendanceId(fallbackResponse.attendance_id);
+            const latest = await getAttendanceById(fallbackResponse.attendance_id);
+            setResult(latest);
+          } else {
+            setResult(fallbackResponse);
+          }
+        } catch (fallbackErr: any) {
+          setError(fallbackErr.response?.data?.error || fallbackErr.message);
+        }
+      } else {
+        setError(err.response?.data?.error || err.message);
+      }
     } finally {
       setLoading(false);
+      setProcessingStage(null);
     }
   };
 
@@ -105,21 +132,27 @@ export default function UploadAttendance() {
                       Attendance Processed
                     </h4>
                     <div className="space-y-2 text-sm text-slate-700">
+                      {attendanceId && (
+                        <div className="flex justify-between bg-slate-50 p-2 rounded">
+                          <span>Attendance ID:</span>
+                          <span className="font-mono text-xs">{attendanceId}</span>
+                        </div>
+                      )}
                       <div className="flex justify-between bg-slate-50 p-2 rounded">
                         <span>Faces Matched:</span>
-                        <span className="font-bold">{result.present_students?.length || 0}</span>
+                        <span className="font-bold">{result.present_count || result.recognized?.length || 0}</span>
                       </div>
                       <div className="flex justify-between bg-slate-50 p-2 rounded">
                         <span>Unrecognized Faces:</span>
-                        <span className="font-bold">{result.unmatched_faces_count || 0}</span>
+                        <span className="font-bold">{result.unrecognized_faces?.length || 0}</span>
                       </div>
                       
-                      {result.present_students?.length > 0 && (
+                      {result.recognized?.length > 0 && (
                         <div className="mt-4 pt-4 border-t border-slate-100">
                           <p className="font-medium mb-2">Present Students:</p>
                           <ul className="list-disc pl-5 space-y-1">
-                            {result.present_students.map((st: string) => (
-                              <li key={st}>{st}</li>
+                            {result.recognized.map((st: any) => (
+                              <li key={st.student_id}>{st.name || st.student_id} ({st.student_id})</li>
                             ))}
                           </ul>
                         </div>
@@ -142,29 +175,39 @@ export default function UploadAttendance() {
                     />
                     
                     {/* Render Bounding Boxes */}
-                    {result?.bounding_boxes && imageRef.current && (
+                    {result && imageRef.current && (
                       <svg 
                         className="absolute top-0 left-0 w-full h-full pointer-events-none" 
                         xmlns="http://www.w3.org/2000/svg"
                       >
-                        {result.bounding_boxes.map((box: any, i: number) => {
-                          const width = box.Width * 100;
-                          const height = box.Height * 100;
-                          const left = box.Left * 100;
-                          const top = box.Top * 100;
-                          
-                          const isMatched = box.matched;
-                          const strokeColor = isMatched ? '#10b981' : '#f43f5e'; // emerald or rose
-                          
+                        {(result.recognized || []).map((face: any, i: number) => {
+                          const box = face.bounding_box;
                           return (
-                            <g key={i}>
+                            <g key={`recognized-${i}`}>
                               <rect 
-                                x={`${left}%`} 
-                                y={`${top}%`} 
-                                width={`${width}%`} 
-                                height={`${height}%`} 
+                                x={`${box.Left * 100}%`} 
+                                y={`${box.Top * 100}%`} 
+                                width={`${box.Width * 100}%`} 
+                                height={`${box.Height * 100}%`} 
                                 fill="none" 
-                                stroke={strokeColor} 
+                                stroke="#10b981"
+                                strokeWidth="3" 
+                                rx="4"
+                              />
+                            </g>
+                          );
+                        })}
+                        {(result.unrecognized_faces || []).map((face: any, i: number) => {
+                          const box = face.bounding_box;
+                          return (
+                            <g key={`unknown-${i}`}>
+                              <rect 
+                                x={`${box.Left * 100}%`} 
+                                y={`${box.Top * 100}%`} 
+                                width={`${box.Width * 100}%`} 
+                                height={`${box.Height * 100}%`} 
+                                fill="none" 
+                                stroke="#f43f5e"
                                 strokeWidth="3" 
                                 rx="4"
                               />
@@ -177,6 +220,11 @@ export default function UploadAttendance() {
                 )}
               </div>
             </div>
+            {processingStage && (
+              <div className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm text-indigo-700">
+                {processingStage}
+              </div>
+            )}
             
           </CardContent>
           <CardFooter>

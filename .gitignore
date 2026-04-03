@@ -6,6 +6,10 @@ dist/
 build/
 .serverless/
 
+# Python cache
+__pycache__/
+*.py[cod]
+
 # Environment variables
 .env
 .env.local
