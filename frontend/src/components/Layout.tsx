@@ -1,16 +1,25 @@
 import React from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
-import { LayoutDashboard, UserPlus, FileImage, Settings } from 'lucide-react';
+import { LayoutDashboard, UserPlus, FileImage, ShieldCheck, LogOut, User } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useAuth } from '../auth';
 
-const sidebarLinks = [
+const adminLinks = [
   { name: 'Dashboard', path: '/', icon: LayoutDashboard },
+  { name: 'Admin Classes', path: '/admin/classes', icon: ShieldCheck },
   { name: 'Register Student', path: '/register', icon: UserPlus },
   { name: 'Upload Attendance', path: '/attendance', icon: FileImage },
-  { name: 'Settings', path: '/settings', icon: Settings },
+];
+
+const studentLinks = [
+  { name: 'Student Home', path: '/student', icon: User },
+  { name: 'Dashboard', path: '/', icon: LayoutDashboard },
 ];
 
 export const Layout: React.FC = () => {
+  const { role, logout } = useAuth();
+  const sidebarLinks = role === 'admin' ? adminLinks : studentLinks;
+
   return (
     <div className="flex bg-slate-50 min-h-screen text-slate-900 overflow-hidden font-sans">
       <motion.aside 
@@ -42,6 +51,17 @@ export const Layout: React.FC = () => {
             );
           })}
         </nav>
+        <div className="p-4 border-t border-slate-100">
+          <div className="text-xs text-slate-500 mb-2">Role: {role === 'admin' ? 'Admin' : 'Student'}</div>
+          <button
+            type="button"
+            onClick={logout}
+            className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 py-2 text-sm text-slate-700 hover:bg-slate-100"
+          >
+            <LogOut className="w-4 h-4" />
+            Đăng xuất
+          </button>
+        </div>
       </motion.aside>
       
       <main className="flex-1 ml-64 p-8 overflow-y-auto h-screen relative">

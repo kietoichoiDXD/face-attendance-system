@@ -1,19 +1,29 @@
 import logging
 
-import boto3
+from google.api_core.exceptions import Conflict
+from google.cloud import firestore
+from google.cloud import storage
 
 from app.config import settings
 
 LOGGER = logging.getLogger(__name__)
 
-s3_client = boto3.client("s3", region_name=settings.aws_region)
-rekognition_client = boto3.client("rekognition", region_name=settings.aws_region)
-dynamodb = boto3.resource("dynamodb", region_name=settings.aws_region)
+storage_client = storage.Client(project=settings.gcp_project_id)
+firestore_client = firestore.Client(project=settings.gcp_project_id)
 
 
-def ensure_rekognition_collection() -> None:
+def ensure_bucket(bucket_name: str) -> storage.Bucket:
+    bucket = storage_client.bucket(bucket_name)
     try:
-        rekognition_client.create_collection(CollectionId=settings.rekognition_collection_id)
-        LOGGER.info("Created collection %s", settings.rekognition_collection_id)
-    except rekognition_client.exceptions.ResourceAlreadyExistsException:
-        LOGGER.info("Collection %s already exists", settings.rekognition_collection_id)
+        storage_client.get_bucket(bucket_name)
+        return bucket
+    except Exception:
+        pass
+
+    try:
+        created = storage_client.create_bucket(bucket_name, location=settings.gcp_region)
+        LOGGER.info("Created GCS bucket %s", bucket_name)
+        return created
+    except Conflict:
+        LOGGER.info("Bucket %s already exists", bucket_name)
+        return bucket

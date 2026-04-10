@@ -6,11 +6,12 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from app.clients import rekognition_client, s3_client
+from app.clients import ensure_bucket, storage_client
 from app.config import settings
 from app.gcp_vision import build_vision_client
 from repositories.attendance_repository import AttendanceRepository
 from repositories.students_repository import StudentsRepository
+from utils.face_embedding import build_face_embedding, cosine_similarity
 from utils.image_tools import crop_face, image_size, poly_to_ratio_box
 
 LOGGER = logging.getLogger(__name__)
@@ -26,17 +27,16 @@ class AttendanceService:
         self.students_repo = students_repo or StudentsRepository()
 
     def create_upload_url(self, class_id: str) -> Dict[str, str]:
+        ensure_bucket(settings.class_uploads_bucket)
         attendance_id = str(uuid.uuid4())
         object_key = f"classes/{class_id}/attendance/{attendance_id}.jpg"
 
-        upload_url = s3_client.generate_presigned_url(
-            ClientMethod="put_object",
-            Params={
-                "Bucket": settings.class_uploads_bucket,
-                "Key": object_key,
-                "ContentType": "image/jpeg",
-            },
-            ExpiresIn=900,
+        blob = storage_client.bucket(settings.class_uploads_bucket).blob(object_key)
+        upload_url = blob.generate_signed_url(
+            version="v4",
+            expiration=900,
+            method="PUT",
+            content_type="image/jpeg",
         )
 
         self.attendance_repo.put_record(
@@ -85,14 +85,13 @@ class AttendanceService:
         return attendance_id
 
     def process_sync_payload(self, class_id: str, image_bytes: bytes) -> Dict[str, Any]:
+        ensure_bucket(settings.class_uploads_bucket)
         attendance_id = str(uuid.uuid4())
         object_key = f"classes/{class_id}/attendance/{attendance_id}.jpg"
 
-        s3_client.put_object(
-            Bucket=settings.class_uploads_bucket,
-            Key=object_key,
-            Body=image_bytes,
-            ContentType="image/jpeg",
+        storage_client.bucket(settings.class_uploads_bucket).blob(object_key).upload_from_string(
+            image_bytes,
+            content_type="image/jpeg",
         )
 
         result = self._run_face_matching(image_bytes, class_id)
@@ -113,12 +112,11 @@ class AttendanceService:
         return {"attendance_id": attendance_id, **result}
 
     def _read_s3_object(self, object_key: str) -> bytes:
-        response = s3_client.get_object(Bucket=settings.class_uploads_bucket, Key=object_key)
-        return response["Body"].read()
+        return storage_client.bucket(settings.class_uploads_bucket).blob(object_key).download_as_bytes()
 
     def _run_face_matching(self, image_bytes: bytes, class_id: str) -> Dict[str, Any]:
         detected_faces = self._detect_faces_google_vision(image_bytes)
-        students = [s for s in self.students_repo.get_all_students() if s.get("class_id") == class_id]
+        students = self.students_repo.get_students_by_class(class_id)
         width, height = image_size(image_bytes)
 
         recognized: List[Dict[str, Any]] = []
@@ -149,24 +147,19 @@ class AttendanceService:
 
     def _find_best_match(self, target_face: bytes, students: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
         best: Optional[Dict[str, Any]] = None
+        target_embedding = build_face_embedding(target_face)
 
         for student in students:
-            source_key = student.get("face_image_s3_key")
-            if not source_key:
+            source_embedding = student.get("embedding")
+            if not source_embedding:
                 continue
 
-            compare = rekognition_client.compare_faces(
-                SourceImage={"S3Object": {"Bucket": settings.student_faces_bucket, "Name": source_key}},
-                TargetImage={"Bytes": target_face},
-                SimilarityThreshold=88,
-            )
-            matches = compare.get("FaceMatches", [])
-            if not matches:
+            similarity = cosine_similarity(target_embedding, source_embedding)
+            if similarity < settings.match_similarity_threshold:
                 continue
 
-            similarity = matches[0]["Similarity"]
             if not best or similarity > best["confidence"]:
-                best = {"student": student, "confidence": similarity}
+                best = {"student": student, "confidence": similarity * 100.0}
 
         return best
 
