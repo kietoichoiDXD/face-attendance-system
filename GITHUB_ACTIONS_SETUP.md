@@ -42,3 +42,6 @@ Error:
 Fix:
 - Ensure GCP_SA_KEY secret exists and is not empty.
 - Ensure workflow runs in this repository context, not from forks without secrets.
+- Secret name must be exactly: GCP_SA_KEY
+- Paste raw JSON content (starts with { and ends with }), do not wrap in quotes.
+- Create secret at Repository settings (not Environment-only secret unless the job uses that environment).
