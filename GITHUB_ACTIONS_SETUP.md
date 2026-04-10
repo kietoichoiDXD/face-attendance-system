@@ -2,6 +2,10 @@
 
 This repository deploys with the workflow in .github/workflows/firebase-deploy.yml.
 
+Current CI behavior:
+- Deploys Firebase Hosting (frontend) from frontend/dist.
+- Does not deploy backend Python service through firebase deploy.
+
 ## Required GitHub Secrets
 
 Add these secrets in one of the two places below:
@@ -49,3 +53,10 @@ Fix:
 - Secret name must be exactly: GCP_SA_KEY
 - Paste raw JSON content (starts with { and ends with }), do not wrap in quotes.
 - This workflow is configured with environment: bdien-muonmay, so Environment secrets are supported.
+
+Error:
+- Cannot understand what targets to deploy/serve.
+
+Fix:
+- Ensure firebase.json has a valid hosting section.
+- Ensure frontend build output exists at frontend/dist in CI.
