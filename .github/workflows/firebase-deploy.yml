@@ -106,8 +106,41 @@ jobs:
       - name: Install Firebase CLI
         run: npm install -g firebase-tools
 
+      - name: Verify deploy inputs
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+
+          config_path = "firebase.json"
+          if not os.path.isfile(config_path):
+              print("::error::firebase.json not found at repository root")
+              sys.exit(1)
+
+          with open(config_path, "r", encoding="utf-8") as f:
+              config = json.load(f)
+
+          hosting = config.get("hosting")
+          if not isinstance(hosting, dict):
+              print("::error::firebase.json must contain a 'hosting' object")
+              sys.exit(1)
+
+          public_dir = hosting.get("public")
+          if not public_dir:
+              print("::error::firebase.json hosting.public is missing")
+              sys.exit(1)
+
+          if not os.path.isdir(public_dir):
+              print(f"::error::hosting.public directory does not exist: {public_dir}")
+              sys.exit(1)
+          PY
+
+      - name: Verify Firebase auth
+        run: firebase projects:list --json > /dev/null
+
       - name: Deploy to Firebase
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
           FIREBASE_PROJECT_NUMBER: ${{ secrets.FIREBASE_PROJECT_NUMBER }}
-        run: firebase deploy --project "$FIREBASE_PROJECT_ID" --only hosting --non-interactive
+        run: firebase deploy --config firebase.json --project "$FIREBASE_PROJECT_ID" --only hosting --non-interactive
