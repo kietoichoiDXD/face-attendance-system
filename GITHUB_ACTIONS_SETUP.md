@@ -4,8 +4,12 @@ This repository deploys with the workflow in .github/workflows/firebase-deploy.y
 
 ## Required GitHub Secrets
 
-Add these secrets in:
-Settings -> Secrets and variables -> Actions -> New repository secret
+Add these secrets in one of the two places below:
+
+- Preferred for current workflow:
+  Settings -> Environments -> bdien-muonmay -> Add environment secret
+- Alternative:
+  Settings -> Secrets and variables -> Actions -> New repository secret
 
 1. GCP_SA_KEY
 - Value: full JSON content of a Google Cloud service account key.
@@ -44,4 +48,4 @@ Fix:
 - Ensure workflow runs in this repository context, not from forks without secrets.
 - Secret name must be exactly: GCP_SA_KEY
 - Paste raw JSON content (starts with { and ends with }), do not wrap in quotes.
-- Create secret at Repository settings (not Environment-only secret unless the job uses that environment).
+- This workflow is configured with environment: bdien-muonmay, so Environment secrets are supported.

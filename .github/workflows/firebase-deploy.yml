@@ -14,6 +14,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: bdien-muonmay
     env:
       FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
