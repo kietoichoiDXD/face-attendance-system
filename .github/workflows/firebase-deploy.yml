@@ -45,6 +45,7 @@ jobs:
         uses: google-github-actions/auth@v3
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.FIREBASE_PROJECT_ID }}
 
       - name: Setup gcloud SDK
         uses: google-github-actions/setup-gcloud@v3
@@ -55,4 +56,5 @@ jobs:
       - name: Deploy to Firebase
         env:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          FIREBASE_PROJECT_NUMBER: ${{ secrets.FIREBASE_PROJECT_NUMBER }}
         run: firebase deploy --project "$FIREBASE_PROJECT_ID" --non-interactive
