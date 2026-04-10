@@ -54,7 +54,7 @@ export default function UploadAttendance() {
       setProcessingStage('Uploading image to cloud storage...');
       await uploadAttendanceImage(uploadSession.upload_url, imageFile);
 
-      setProcessingStage('Cloud AI is detecting and matching faces...');
+      setProcessingStage('Google Cloud AI is detecting and matching faces...');
       const response = await waitForAttendanceResult(uploadSession.attendance_id);
       setResult(response);
     } catch (err: any) {

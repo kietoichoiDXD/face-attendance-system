@@ -1,0 +1,4 @@
+session_id,class_id,session_date,student_id,present,source_dataset,confidence,checkin_time,note
+2026-04-10-CNTT-K44-A-P1,CNTT-K44-A,2026-04-10,SE001,1,cloud_pipeline,0.97,2026-04-10T07:02:12Z,
+2026-04-10-CNTT-K44-A-P1,CNTT-K44-A,2026-04-10,SE002,0,cloud_pipeline,,,
+2026-04-10-LFW-DEMO-01-P1,LFW-DEMO-01,2026-04-10,SE003,1,tabular_external,0.92,2026-04-10T08:10:00Z,benchmark row

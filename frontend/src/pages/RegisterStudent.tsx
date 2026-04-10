@@ -68,7 +68,7 @@ export default function RegisterStudent() {
               </div>
               <CardTitle className="text-2xl">Register Student</CardTitle>
             </div>
-            <CardDescription>Add a new student face to the Rekognition Collection</CardDescription>
+            <CardDescription>Add a new student face to Google Cloud student registry</CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-5">

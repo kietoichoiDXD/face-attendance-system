@@ -10,6 +10,13 @@ export const apiClient = axios.create({
   },
 });
 
+export type StudentItem = {
+  student_id: string;
+  name: string;
+  class_id: string;
+  face_image_gcs_key?: string;
+};
+
 const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export type RecognizedFace = {
@@ -144,4 +151,33 @@ export const waitForAttendanceResult = async (
 export const exportCsvUrl = () => {
   if (IS_MOCK) return '#';
   return `${API_BASE_URL}/attendance/export`;
+};
+
+export const getClasses = async () => {
+  if (IS_MOCK) {
+    await delay(200);
+    return { classes: [{ class_id: 'CS101', student_count: 3 }] };
+  }
+  const { data } = await apiClient.get('/classes');
+  return data as { classes: Array<{ class_id: string; student_count: number }> };
+};
+
+export const getStudentsByClass = async (classId: string) => {
+  if (IS_MOCK) {
+    await delay(200);
+    return {
+      class_id: classId,
+      students: [
+        { student_id: 'S001', name: 'Alice Smith', class_id: classId },
+        { student_id: 'S002', name: 'Bob Jones', class_id: classId },
+      ],
+    };
+  }
+  const { data } = await apiClient.get(`/classes/${classId}/students`);
+  return data as { class_id: string; students: StudentItem[] };
+};
+
+export const studentImageUrl = (studentId: string) => {
+  if (IS_MOCK) return 'https://via.placeholder.com/128x128.png?text=Face';
+  return `${API_BASE_URL}/students/${studentId}/image`;
 };

@@ -1,0 +1,6 @@
+student_id,image_path,split,capture_type,source_dataset,quality_score
+SE001,data/raw/kaggle_attendance/person_0001/register_01.jpg,register,portrait,kaggle_attendance,0.95
+SE001,data/raw/kaggle_attendance/person_0001/probe_01.jpg,probe,group_crop,kaggle_attendance,0.88
+SE002,data/raw/kaggle_attendance/person_0002/register_01.jpg,register,portrait,kaggle_attendance,0.93
+SE003,data/raw/lfw/George_W_Bush/image_0001.jpg,register,portrait,lfw,0.90
+SE003,data/raw/lfw/George_W_Bush/image_0010.jpg,probe,group_crop,lfw,0.80

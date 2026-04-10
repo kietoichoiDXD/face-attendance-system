@@ -3,9 +3,12 @@ from __future__ import annotations
 import uuid
 from typing import Any, Dict
 
-from app.clients import ensure_rekognition_collection, rekognition_client, s3_client
+from app.clients import ensure_bucket, storage_client
 from app.config import settings
+from app.gcp_vision import build_vision_client
 from repositories.students_repository import StudentsRepository
+from utils.face_embedding import build_face_embedding
+from utils.image_tools import crop_face
 
 
 class StudentRegistrationService:
@@ -13,37 +16,33 @@ class StudentRegistrationService:
         self.repository = repository or StudentsRepository()
 
     def register_student(self, student_id: str, name: str, class_id: str, image_bytes: bytes) -> Dict[str, Any]:
-        ensure_rekognition_collection()
+        ensure_bucket(settings.student_faces_bucket)
         file_key = f"students/{class_id}/{student_id}-{uuid.uuid4().hex}.jpg"
 
-        s3_client.put_object(
-            Bucket=settings.student_faces_bucket,
-            Key=file_key,
-            Body=image_bytes,
-            ContentType="image/jpeg",
-        )
+        blob = storage_client.bucket(settings.student_faces_bucket).blob(file_key)
+        blob.upload_from_string(image_bytes, content_type="image/jpeg")
 
-        indexed = rekognition_client.index_faces(
-            CollectionId=settings.rekognition_collection_id,
-            Image={"S3Object": {"Bucket": settings.student_faces_bucket, "Name": file_key}},
-            ExternalImageId=student_id,
-            MaxFaces=1,
-            QualityFilter="AUTO",
-            DetectionAttributes=["DEFAULT"],
-        )
+        from google.cloud import vision
 
-        face_records = indexed.get("FaceRecords", [])
-        if not face_records:
+        vision_client = build_vision_client()
+        response = vision_client.face_detection(image=vision.Image(content=image_bytes))
+        if response.error.message:
+            raise RuntimeError(f"Google Vision error: {response.error.message}")
+
+        if not response.face_annotations:
             raise ValueError("No face detected in student image")
 
-        face_id = face_records[0]["Face"]["FaceId"]
+        vertices = [{"x": v.x, "y": v.y} for v in response.face_annotations[0].bounding_poly.vertices]
+        face_crop = crop_face(image_bytes, {"vertices": vertices})
+        embedding = build_face_embedding(face_crop)
 
         student_item = {
             "student_id": student_id,
             "name": name,
             "class_id": class_id,
-            "face_id": face_id,
-            "face_image_s3_key": file_key,
+            "face_id": student_id,
+            "face_image_gcs_key": file_key,
+            "embedding": embedding,
         }
         self.repository.put_student(student_item)
         return student_item

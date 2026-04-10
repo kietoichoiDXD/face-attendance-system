@@ -9,10 +9,28 @@ build/
 # Python cache
 __pycache__/
 *.py[cod]
+.venv/
+venv/
+env/
 
 # Environment variables
 .env
 .env.local
+.env.*
+!.env.example
+!.env.sample
+
+# Secrets and credential artifacts
+*.pem
+*.key
+*.p12
+*kaggle.json
+*gcp-sa.json
+*service-account*.json
+
+# Local dataset artifacts
+data/raw/
+data/processed/demo/
 
 # IDE files
 .vscode/

@@ -6,43 +6,43 @@ A modern, cloud-native attendance tracking system that leverages Artificial Inte
 
 ## ✨ Key Features
 
--   **👤 Student Registration**: Register students with their face data stored securely in AWS Rekognition.
+-   **👤 Student Registration**: Register students with face embeddings stored in Google Cloud Storage + Firestore.
 -   **📸 Intelligent Attendance**: Upload a photo of the entire class; the system automatically recognizes students and draws bounding boxes.
 -   **📊 Analytics Dashboard**: Real-time visualization of attendance rates, total students, and recent trends.
 -   **📥 CSV Export**: Export attendance reports for any class with one click.
--   **☁️ Serverless Platform**: Built on AWS Lambda for high scalability and low cost.
+-   **☁️ Serverless Platform**: Built on Google Cloud Functions / Cloud Run Functions for high scalability and low cost.
 
 ## 🛠️ Technology Stack
 
 -   **Frontend**: React 18, TailwindCSS, Shadcn/UI, Recharts, Vite.
--   **Backend**: Python 3.12, Serverless Framework, AWS Lambda.
--   **Cloud Infrastructure**: AWS Rekognition (AI/ML), AWS DynamoDB (Database), AWS S3 (Storage), AWS API Gateway.
+-   **Backend**: Python 3.13, Google Cloud Functions / Cloud Run Functions.
+-   **Cloud Infrastructure**: Google Cloud Vision (AI), Cloud Firestore (NoSQL), Cloud Storage (Object Storage), API Gateway/HTTP.
 
 ## 📐 System Architecture
 
-1.  **Student Image Registration**: Faculty uploads student info + face image -> Lambda -> Stored in S3 + Face indexed in Rekognition Collection.
-2.  **Attendance Processing**: Teacher uploads class photo -> Lambda -> Rekognition detects all faces -> Search faces in Collection -> Matches returned with metadata -> Results stored in DynamoDB.
-3.  **Visualization**: Frontend fetches analytics via API Gateway and shows interactive charts.
+1.  **Student Image Registration**: Faculty uploads student info + face image -> serverless function -> stored in Cloud Storage + embedding stored in Firestore.
+2.  **Attendance Processing**: Teacher uploads class photo -> serverless function -> Google Vision detects faces -> embeddings are compared with registered students -> results stored in Firestore.
+3.  **Visualization**: Frontend fetches analytics API and shows interactive charts.
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
--   Node.js (v18+) & Python (v3.12+)
--   AWS Account & AWS CLI configured
--   Serverless Framework (`npm install -g serverless`)
+-   Node.js (v18+) & Python (v3.13+)
+-   Google Cloud project configured
+-   gcloud CLI authenticated
 
-### Backend Setup (AWS)
+### Backend Setup (GCP)
 
 1.  Navigate to the backend directory:
     ```bash
     cd backend
     ```
-2.  Deploy the infrastructure:
+2.  Install Python dependencies:
     ```bash
-    serverless deploy
+    pip install -r requirements.txt
     ```
-3.  Copy the generated **API Gateway URL**.
+3.  Set environment variables for GCP project and storage buckets (optional if defaults fit your project).
 
 ### Frontend Setup
 
