@@ -55,6 +55,14 @@ Fix:
 - This workflow is configured with environment: bdien-muonmay, so Environment secrets are supported.
 
 Error:
+- Authenticate to Google Cloud failed
+
+Fix:
+- Replace GCP_SA_KEY with the newest rotated key JSON.
+- Ensure GCP_SA_KEY project_id equals FIREBASE_PROJECT_ID.
+- Ensure the secret is set in Environment: bdien-muonmay.
+
+Error:
 - Cannot understand what targets to deploy/serve.
 
 Fix:

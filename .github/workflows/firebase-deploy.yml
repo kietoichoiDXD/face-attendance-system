@@ -58,6 +58,42 @@ jobs:
             exit 1
           fi
 
+      - name: Validate GCP key JSON shape
+        env:
+          GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import sys
+
+          raw = os.environ.get("GCP_SA_KEY", "")
+          if not raw:
+              print("::error::GCP_SA_KEY is empty")
+              sys.exit(1)
+
+          try:
+              data = json.loads(raw)
+          except Exception:
+              print("::error::GCP_SA_KEY is not valid JSON")
+              sys.exit(1)
+
+          required = ["type", "project_id", "private_key", "client_email"]
+          missing = [k for k in required if not data.get(k)]
+          if missing:
+              print("::error::GCP_SA_KEY missing fields: " + ", ".join(missing))
+              sys.exit(1)
+
+          if data.get("type") != "service_account":
+              print("::error::GCP_SA_KEY type must be service_account")
+              sys.exit(1)
+
+          if data.get("project_id") != os.environ.get("FIREBASE_PROJECT_ID"):
+              print("::error::GCP_SA_KEY project_id does not match FIREBASE_PROJECT_ID")
+              sys.exit(1)
+          PY
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v3
         with:
