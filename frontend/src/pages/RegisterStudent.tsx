@@ -58,7 +58,7 @@ export default function RegisterStudent() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto mt-8">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-2xl mx-auto mt-4 sm:mt-8 px-0 sm:px-0">
       <Card>
         <form onSubmit={handleSubmit}>
           <CardHeader>
@@ -66,9 +66,9 @@ export default function RegisterStudent() {
               <div className="p-2 bg-blue-100 text-blue-600 rounded-lg">
                 <UserPlus className="w-5 h-5" />
               </div>
-              <CardTitle className="text-2xl">Register Student</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl">Register Student</CardTitle>
             </div>
-            <CardDescription>Add a new student face to Google Cloud student registry</CardDescription>
+            <CardDescription className="text-sm sm:text-base">Add a new student face to Google Cloud student registry</CardDescription>
           </CardHeader>
           
           <CardContent className="space-y-5">
@@ -111,10 +111,10 @@ export default function RegisterStudent() {
             <div className="space-y-2">
               <Label htmlFor="image">Face Image</Label>
               <div className="flex items-center justify-center w-full">
-                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors">
+                <label className="flex flex-col items-center justify-center w-full min-h-32 border-2 border-slate-300 border-dashed rounded-lg cursor-pointer bg-slate-50 hover:bg-slate-100 transition-colors p-4 text-center">
                   <div className="flex flex-col items-center justify-center p-4">
                     <ImageIcon className="w-8 h-8 mb-2 text-slate-400" />
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-slate-500 break-words">
                       {base64Image ? "Image selected" : "Click to upload student photo"}
                     </p>
                   </div>

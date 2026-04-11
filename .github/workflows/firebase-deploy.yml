@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - feature/update-20260403
+      - feature/mobile-responsive-secure
   workflow_dispatch:
 
 permissions:

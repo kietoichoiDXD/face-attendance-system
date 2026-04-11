@@ -84,7 +84,7 @@ export default function UploadAttendance() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6 mt-4">
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-4xl mx-auto space-y-6 mt-4 px-0 sm:px-0">
       <Card>
         <form onSubmit={handleSubmit}>
           <CardHeader>
@@ -92,9 +92,9 @@ export default function UploadAttendance() {
               <div className="p-2 bg-indigo-100 text-indigo-600 rounded-lg">
                 <FileImage className="w-5 h-5" />
               </div>
-              <CardTitle className="text-2xl">Upload Class Photo</CardTitle>
+              <CardTitle className="text-xl sm:text-2xl">Upload Class Photo</CardTitle>
             </div>
-            <CardDescription>Submit a group photo to automatically mark attendance</CardDescription>
+            <CardDescription className="text-sm sm:text-base">Submit a group photo to automatically mark attendance</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {error && (
@@ -103,7 +103,7 @@ export default function UploadAttendance() {
               </div>
             )}
             
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="classId">Class/Group ID</Label>
@@ -162,16 +162,16 @@ export default function UploadAttendance() {
                 )}
               </div>
               
-              <div className="border border-slate-200 rounded-lg bg-slate-50 p-2 flex items-center justify-center relative min-h-[300px] overflow-hidden">
+              <div className="border border-slate-200 rounded-lg bg-slate-50 p-2 sm:p-3 flex items-center justify-center relative min-h-[240px] sm:min-h-[300px] overflow-hidden order-first md:order-none">
                 {!imagePreviewUrl ? (
                   <p className="text-slate-400 text-sm">Image preview will appear here</p>
                 ) : (
-                  <div className="relative inline-block max-w-full">
+                  <div className="relative inline-block max-w-full w-full">
                     <img 
                       ref={imageRef}
                       src={imagePreviewUrl} 
                       alt="Class Preview" 
-                      className="max-w-full h-auto object-contain rounded"
+                      className="max-w-full h-auto object-contain rounded mx-auto"
                     />
                     
                     {/* Render Bounding Boxes */}
