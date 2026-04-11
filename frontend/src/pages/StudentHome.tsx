@@ -65,11 +65,11 @@ export default function StudentHome() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto mt-8 space-y-6">
-      <Card>
+    <div className="max-w-3xl mx-auto mt-4 sm:mt-8 space-y-6 px-0 sm:px-0">
+      <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle>Cổng Sinh viên/Học sinh</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl sm:text-2xl">Cổng Sinh viên/Học sinh</CardTitle>
+          <CardDescription className="text-sm sm:text-base">
             Sinh viên chọn mã lớp và upload ảnh cá nhân để đăng ký khuôn mặt vào lớp.
           </CardDescription>
         </CardHeader>
@@ -86,7 +86,7 @@ export default function StudentHome() {
             </div>
           )}
 
-          <form onSubmit={handleUpload} className="space-y-3">
+          <form onSubmit={handleUpload} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="classId">Mã lớp</Label>
               <Input
@@ -103,7 +103,7 @@ export default function StudentHome() {
               </datalist>
             </div>
 
-            <div className="grid md:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="studentId">Mã sinh viên</Label>
                 <Input
@@ -134,7 +134,7 @@ export default function StudentHome() {
               />
             </div>
 
-            <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700">
               {loading ? 'Đang tải ảnh...' : 'Vào lớp và tải ảnh cá nhân'}
             </Button>
           </form>

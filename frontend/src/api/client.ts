@@ -1,7 +1,9 @@
 import axios from 'axios';
 
-const IS_MOCK = !import.meta.env.VITE_API_URL;
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+const DEFAULT_PROD_API_BASE_URL = 'https://face-attendance-backend-i6en3qerja-as.a.run.app';
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || (import.meta.env.PROD ? DEFAULT_PROD_API_BASE_URL : 'http://localhost:3000');
+const IS_MOCK = import.meta.env.DEV && !import.meta.env.VITE_API_URL;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -180,4 +182,61 @@ export const getStudentsByClass = async (classId: string) => {
 export const studentImageUrl = (studentId: string) => {
   if (IS_MOCK) return 'https://via.placeholder.com/128x128.png?text=Face';
   return `${API_BASE_URL}/students/${studentId}/image`;
+};
+
+export const getAttendanceHistory = async () => {
+  if (IS_MOCK) {
+    await delay(300);
+    return {
+      attendance: [
+        { attendance_id: 'a1', class_id: 'CS101', timestamp: '2023-10-05T10:00:00Z', present_count: 24, student_count: 30 },
+        { attendance_id: 'a2', class_id: 'MAT102', timestamp: '2023-10-04T09:00:00Z', present_count: 18, student_count: 25 },
+        { attendance_id: 'a3', class_id: 'PHY201', timestamp: '2023-10-03T14:00:00Z', present_count: 15, student_count: 20 },
+      ]
+    };
+  }
+  const { data } = await apiClient.get('/attendance');
+  return data;
+};
+
+export const getStatistics = async () => {
+  if (IS_MOCK) {
+    await delay(300);
+    return {
+      overview: {
+        total_students: 150,
+        total_classes: 8,
+        average_attendance: 88.5,
+      },
+      class_performance: [
+        { class_id: 'CS101', attendance_rate: 92 },
+        { class_id: 'MAT102', attendance_rate: 85 },
+        { class_id: 'PHY201', attendance_rate: 78 },
+      ]
+    };
+  }
+  const { data } = await apiClient.get('/statistics');
+  return data;
+};
+
+export const sendAbsentEmail = async (payload: { student_id: string; email?: string; studentName?: string; date?: string; className?: string }) => {
+  if (IS_MOCK) {
+    await delay(500);
+    console.log('[MOCK] sendAbsentEmail', payload);
+    return { message: 'Email sent successfully' };
+  }
+  
+  const formattedPayload = {
+    to: payload.email || 'parent@example.com',
+    subject: `Attendance Alert: ${payload.studentName} was absent on ${payload.date}`,
+    body: `
+      <h2>Attendance Alert</h2>
+      <p>Dear Parent/Guardian,</p>
+      <p>Please note that ${payload.studentName} (ID: ${payload.student_id}) was marked <strong>ABSENT</strong> from the class ${payload.className || 'Unknown'} on ${payload.date || new Date().toLocaleDateString()}.</p>
+      <p>If you have any questions, please contact the school administration.</p>
+    `
+  };
+
+  const { data } = await apiClient.post('/api/send-email', formattedPayload);
+  return data;
 };
