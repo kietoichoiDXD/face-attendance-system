@@ -39,3 +39,10 @@ data/processed/demo/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Documentation - don't push markdown files
+*.md
+!README.md
+
+# Firebase
+firebase.json
