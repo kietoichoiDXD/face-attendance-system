@@ -1,0 +1,4 @@
+student_id,name,class_id,source_dataset,source_identity,is_active,email,note
+SE001,Nguyen Van A,CNTT-K44-A,kaggle_attendance,person_0001,1,se001@example.edu,
+SE002,Tran Thi B,CNTT-K44-A,kaggle_attendance,person_0002,1,se002@example.edu,
+SE003,Le Van C,LFW-DEMO-01,lfw,George_W_Bush,1,,synthetic class for benchmark
