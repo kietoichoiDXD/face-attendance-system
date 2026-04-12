@@ -1,0 +1,38 @@
+indexes:
+  # Index for querying students by class
+  - collectionGroup: 'students'
+    queryScope: 'COLLECTION'
+    fields:
+      - fieldPath: 'class_id'
+        order: 'ASCENDING'
+      - fieldPath: 'created_at'
+        order: 'DESCENDING'
+
+  # Index for querying attendance by class and date
+  - collectionGroup: 'attendance'
+    queryScope: 'COLLECTION'
+    fields:
+      - fieldPath: 'class_id'
+        order: 'ASCENDING'
+      - fieldPath: 'created_at'
+        order: 'DESCENDING'
+
+  # Index for attendance status and class
+  - collectionGroup: 'attendance'
+    queryScope: 'COLLECTION'
+    fields:
+      - fieldPath: 'class_id'
+        order: 'ASCENDING'
+      - fieldPath: 'status'
+        order: 'ASCENDING'
+      - fieldPath: 'created_at'
+        order: 'DESCENDING'
+
+  # TTL index for automatic data cleanup (90 days)
+  - collectionGroup: 'attendance'
+    queryScope: 'COLLECTION'
+    fields:
+      - fieldPath: '__name__'
+        order: 'ASCENDING'
+      - fieldPath: 'created_at'
+        order: 'ASCENDING'

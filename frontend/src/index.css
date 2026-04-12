@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
+
+:root {
+  --bg-0: #f3fbff;
+  --bg-1: #e8f6ff;
+  --ink-0: #0f2d3c;
+  --ink-1: #3b596d;
+
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  line-height: 1.45;
+  font-weight: 500;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: var(--ink-0);
+  background:
+    radial-gradient(circle at 8% 12%, rgba(110, 224, 216, 0.28) 0, transparent 28%),
+    radial-gradient(circle at 86% 6%, rgba(88, 172, 246, 0.18) 0, transparent 26%),
+    linear-gradient(180deg, var(--bg-0), var(--bg-1));
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Space Grotesk', sans-serif;
+}
